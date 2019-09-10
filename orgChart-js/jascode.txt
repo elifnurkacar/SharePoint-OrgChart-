@@ -1,0 +1,174 @@
+Dosya uzantýlarý:
+
+program files/common files/microsoft shared/web server extensions/14/template/layouts
+
+OrgChart Using JQuery and SharePoint List
+In this blog post I'm going to display how to build our own Organization chart with the help of JQuery by fetching data from SharePoint List.
+
+In this example, I've used the standard jQuery.Orgchart library from this link.
+
+Please follow the below steps to generate the Chart:
+
+Create a SharePoint List using custom list template and define the hierarchy
+
+Create a lookup column of same list. Example, Supervisor column is a lookup of 'Org Chart' list.
+Now add a content editor webpart on a page.
+add the jquery references in content editor webpart. 
+
+<link rel="stylesheet" href="_layouts/jquery.orgchart.css" /> 
+<link rel="stylesheet" href="_layouts/jquery-ui-1.10.3.custom.css" /> 
+<script src="_layouts/jquery-1.9.1.js"/> 
+<script src="_layouts/jquery-ui-1.10.3.custom.js"/> 
+<script src="_layouts/jquery.orgchart.js"/>
+/* bunu ben ekledim.*/
+<script src="_layouts/customorgchart.js"/>
+
+ Now create a new customorgchart.js file into site and add the reference into content editor webpart.
+In customorgchart.js file we are going to write our logic to fetch the data from SharePoint list, generate the html and then create org chart from that HTML.
+
+
+First we will create a class for storing data returned from SharePoint list via JSOM query.
+
+// Employee Node Class
+function Employee (ID,Name,Supervisor) {
+    this.ID = ID;
+    this.Name= Name;
+    this.Supervisor = Supervisor;
+}
+
+Now we call the JSOM query to fetch data from the list
+
+SP.SOD.executeFunc("SP.js","SP.ClientContext",LoadOrgChartData);
+
+function LoadOrgChartData(searchText) 
+{
+    clearChartContents();        
+    
+    $(containerId).html(loadImage);
+        
+    clientContext = new SP.ClientContext(_spPageContextInfo.webServerRelativeUrl);       
+    targetList = clientContext.get_web().get_lists().getByTitle(listPagesTitle);
+    query = new SP.CamlQuery();
+
+    listItems = targetList.getItems(query);
+    clientContext.load(listItems); 
+    clientContext.executeQueryAsync(Function.createDelegate(this, this.onOrgChartQuerySucceeded), Function.createDelegate(this,this.onOrgChartQueryFailed));
+}
+
+Since, JSOM returns data asynchronously, so we require callback functions to be executed once query succeed or fail.
+
+function onOrgChartQuerySucceeded() 
+{
+  var message = "";
+  var listEnumerator = listItems.getEnumerator();  
+    var itemCount = listItems.get_count();
+    var artDate;
+    if(itemCount > 0)
+    {
+        var employeeList = [];
+    
+        var counter =0;
+        while (listEnumerator.moveNext())  {
+              counter++;
+            var title = listEnumerator.get_current().get_item("Title") != null ? listEnumerator.get_current().get_item("Title") : "&nbsp;";
+            var ID = listEnumerator.get_current().get_item("ID");
+            var supervisor = listEnumerator.get_current().get_item("Supervisor") != null ? listEnumerator.get_current().get_item("Supervisor").get_lookupValue() : "0";
+             
+            var objEmp = new Employee(ID ,title ,supervisor);
+            employeeList.push(objEmp);
+        }
+        
+        var supervisor ="0";
+        var note = GetOrgHTML(employeeList,supervisor);
+        
+           removeElement("#org","#imgLoading");
+           $("#org").append(note);
+
+           LoadOrgChart();                    
+       }
+       else
+       {
+           noChartResultsMessage();
+       }
+}
+
+
+function onOrgChartQueryFailed(sender, args) 
+{
+    alert('Request failed. \nError: ' + args.get_message() + '\nStackTrace: ' + args.get_stackTrace());
+}
+
+Once the query succeed, it returns data and we will store that data into the array of Employee class, and then using that array we call 'GetOrgHTML' function.
+
+In GetOrgHTML we simply generate the html required for jquery.orgchart library to generate the orgchart.
+
+function GetOrgHTML(employeeList,supervisor){
+    var note = "";
+    
+    var i=0;
+    
+    for(i=0;i<employeeList.length;i++){
+        var objEmp = employeeList[i];
+        
+        if(objEmp.Supervisor == supervisor && employeeProcessed.indexOf(objEmp.Name) < 0 ){
+            note +='<li>';
+            note += objEmp.Name;                    
+            //supervisor = objEmp.Name;
+            
+            console.log(objEmp.Name);
+            
+            employeeProcessed.push(objEmp.Name);
+    
+            var empUl = GetOrgHTML(employeeList,objEmp.Name);
+            if(empUl !="")
+                 note +='<ul>' + empUl + '</ul>'; 
+                 
+             note +='</li>';
+             
+        }        
+    }    
+    
+    return note;
+}
+
+Once the orgchart html is generated then we call LoadOrgChart function to call the jOrgChart function for generating the organization structure on a page.
+
+
+function LoadOrgChart(){
+
+    $("#org").jOrgChart({
+        chartElement : '#chart',
+        dragAndDrop : true
+    });
+
+    /* Custom jQuery for the example */
+    $("#show-list").click(function(e){
+        e.preventDefault();
+        
+        $('#list-html').toggle('fast', function(){
+            if($(this).is(':visible')){
+                $('#show-list').text('Hide underlying list.');
+                $(".topbar").fadeTo('fast',0.9);
+            }else{
+                $('#show-list').text('Show underlying list.');
+                $(".topbar").fadeTo('fast',1);
+            }
+        });
+    });
+    
+    $('#list-html').text($('#org').html());
+    
+    $("#org").bind("DOMSubtreeModified", function() {
+        $('#list-html').text('');
+        
+        $('#list-html').text($('#org').html());
+        
+        prettyPrint();
+    });
+}
+
+At the end you will see the orgchart generated on page.
+
+
+
+With this simple steps you can create your own orgchart and by modifying the jquery.orgchart.css you can give it your own look and feel. Enjoy !!!!!

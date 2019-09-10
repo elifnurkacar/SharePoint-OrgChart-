@@ -1,0 +1,206 @@
+This time I have a very interesting stuff for you guys. Few days back I got a tricky requirement from one of my customers , its about populating their organizational structure dynamically on their  SharePoint Intranet site without any server side components /Code. Means – there will be a SharePoint list from where data will  be pulled and on a Webpart(CEWP or OOB WP) the hierarchy need to be displayed. Fortunately within few hours I was able to integrate 2-3 things with some javascript / jquery code to accomplish this requirement.  Things require to cook out are
+
+jQuery
+jQuery OrgChart PlugIn  – Kindly read the technical artifacts of jQuery OrgChart from this location.
+Content Editor WebPart
+SharePoint Javascript CSOM
+a SharePoint list
+jQuery Balloon Plug In – If need to show any additional data
+The scenario, I am going to demonstrate here is  to create a corporate organizational structure. For example, CEO on the top then COO, CFO, CTO  then Excutive VPs, AVPs then comes Directors,Managers  after that core execution team.
+
+So, Here we start.
+
+1. Create a custom SharePoint list having  columns like Title, Manager, Designation .Enter some logical details as mentioned below.
+
+List data for populating Org Chart
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+2. Download and place Jquery & jQuery OrgChart plug-in files into the hive’s _layouts folder(see image below).Note : When we  are going through a solution deployment approach we need to place these files inside SP Project to package it to a WSP file.  Here we are directly copying files to _layouts folder just for the sake of demo. If needed you can place the jQuery Balloon file too.
+
+jqueryPlugInFiles
+
+3.Creating the Content Editor WebPart / Script editor WP – Script source file. Save the below mentioned code to a txt file and upload it to the SiteAssets Library. Give the path of the file to CEWP  like  “/SiteAssets/ScriptstxtFile.txt” or directly use this script to your client component.
+
+<link rel="stylesheet" href="_layouts/jquery.orgchart.css" /></pre>
+<link rel="stylesheet" href="_layouts/jquery-ui-1.10.3.custom.css" />
+ 
+<script src="_layouts/jquery-1.9.1.js"></script>
+<script src="_layouts/jquery-ui-1.10.3.custom.js"></script>
+<script src="_layouts/jquery.orgchart.js"></script>
+<script src="_layouts/jquery.balloon.js"></script>
+ 
+<!--This div will be populated with the <ul><li> structure from the SCOM returned objects-->
+<div id="left">
+</div>
+<style>
+ div.node.bladerunner {
+ background-color: #a4a0d9 !important;
+ }
+ 
+div.node.replicant {
+ background-color: #d9ada0 !important;
+ }
+ 
+div.node.deceased {
+ background-color: #d9d2a0 !important;
+ text-decoration: line-through;
+ }
+ 
+div.node.retired {
+ background-color: #d9c0a0 !important;
+ text-decoration: line-through;
+ }
+</style>
+ 
+<!--Main Org Structure will pupulate under this DIV-->
+<div id="content">
+ <div id="main">
+ </div>
+</div>
+ 
+<script type="text/javascript">
+ 
+//loading SharePoint Javascript SCOM
+ ExecuteOrDelayUntilScriptLoaded(loadStructure, "sp.js");
+ 
+//calling the executing function
+ function loadStructure() {
+ 
+//Querying SP using SCOM
+ var context = new SP.ClientContext.get_current();
+ var web = context.get_web();
+ var list = web.get_lists().getByTitle("Employee"); //Employee is SP List containing heirarchy data of the Orgnization
+ var viewXml = '<View><RowLimit>1200</RowLimit></View>';
+ var query = new SP.CamlQuery();
+ query.set_viewXml(viewXml);
+ this.items = list.getItems(query);
+ context.load(items, 'Include(Title, Manager,Designation)');
+ context.add_requestSucceeded(onLoaded);
+ context.add_requestFailed(onFailure);
+ context.executeQueryAsync();
+ 
+function onLoaded() {
+ //Adding SCOM return objects to an array
+ var tasksEntries = [];
+ var itemsCount = items.get_count();
+ for (i = 0; i < itemsCount; i++) {
+ var item = items.itemAt(i);
+ var taskEntry = item.get_fieldValues();
+ tasksEntries.push(taskEntry);
+ }
+ //array's filter function wont work in IE8. Hence GetChildArrayObjects
+ //var topHead = tasksEntries.filter(function (item) { return (item.Manager == null) });
+ var topHead = GetChildArrayObjects(tasksEntries, null);
+ 
+/////Logic to create <ul><li>....</li></ul> for jQuery orgChart -- ####Starts Here
+ var headName = topHead[0].Title;
+ 
+var title = topHead[0].Designation + ", Manager :" + topHead[0].Manager;
+ 
+var listString = "<ul id='organisation'><li class='hide' title='" + headName + "'>" + headName;
+ 
+//Calling the recursive function.getChildNodes
+ var childliststring = getChildNodes(tasksEntries, headName, listString);
+ 
+listString = childliststring + "</li></ul>";
+ 
+var divForList = document.getElementById('left');
+ divForList.innerHTML = listString;
+ /////Logic to create <ul><li>....</li></ul> for jQuery orgChart -- ####Ends Here
+ 
+//Populating OrgChart using Jquery OrgChart Plug in - Basically it reads Created <ul><li> list named 'organisation' and writes a TABLE - DIV structure.
+ $("#organisation").orgChart({ container: $("#main"), nodeClicked: onChartNodeClicked });
+ 
+//enabling balloon for each orgchart block
+ for (var i = 0; i < tasksEntries.length; i++) {
+ 
+$("div[title=\"" + tasksEntries[i].Title + "\"]").balloon({
+ contents: '<img src ="/Images1/_t/images_jpg.jpg"/></br><ul><li> Designation :' + tasksEntries[i].Designation + '</li><li>Phone# : 123-234-1233</li></ul>'
+ 
+});
+ 
+}
+ 
+}
+ //Handled event for node clicked.
+ function onChartNodeClicked(node) {
+ //If we need to do anything specific when clicking a node.
+ }
+ function onFailure() {
+ alert('script failed');
+ }
+ }
+ 
+ //Recursive function to create <ul><li> organization structure.
+ function getChildNodes(tasksEntries, headName, liststring) {
+ 
+//var childs = tasksEntries.filter(function (item) { return (item.Manager == headName) });
+ var childs = GetChildArrayObjects(tasksEntries, headName);
+ 
+if (childs.length > 0) {
+ 
+liststring = liststring + "<ul>";
+ for (var cnt = 0; cnt < childs.length; cnt++) {
+ var head = childs[cnt].Title;
+ var title = childs[cnt].Designation + ", Manager :" + childs[cnt].Manager;
+ liststring = liststring + "<li class='bladerunner' title='" + head + "'>" + head;
+ liststring = getChildNodes(tasksEntries, head, liststring);
+ liststring = liststring + "</li>";
+ }
+ 
+liststring = liststring + "</ul>";
+ }
+ 
+return liststring;
+ }
+ 
+//Alternative function for .filter function to query child objects for a parent in an array
+ function GetChildArrayObjects(items, manager) {
+ 
+var newArray = [];
+ for (var i = 0; i < items.length; i++) {
+ var item = items[i];
+ if (item.Manager == manager) {
+ newArray.push(item);
+ }
+ }
+ 
+return newArray;
+ }
+ 
+</script>
+JQuery OrgChart basically needs a <ul><li> (unordered list) format for populating the Org-Chart. So I am querying the SP List using the SCOM(javascript) and using a recursive function (getChildNodes) the <ul><li> structure is created. After loading this <ul><li> structure I call the jquery orgchart function to populate the hierarchy on the other <div>
+
+The main checkpoints on the above script are :
+
+loadStructure() – JS Function uses SharePoint JS SCOM to Query the list to get the Parent-Child Hierarchy.
+GetChildArrayObjects() – its an alternative to .filter JS function since this is not supported on IE8.
+getChildNodes – Recursive function mentioned above – Which basically structures the unordered list.(see the <ul> mentioned on image below)
+$(“#organisation”).orgChart({ container: $(“#main”), nodeClicked: onChartNodeClicked });   – This line of  jQuery code in the above script actually reads the <ul><oli> and generate the OrgChart.  While you skim the above code, you will be able to see a <ul> with ID as ‘organisation’ created which is read and org chart is populated to a <DIV> ‘main’
+After creating the orgChart, I am iterating through the <DIV> of the OrgChart block according to its ID to enable the ballon
+
+//enabling balloon for each orgchart block
+for (var i = 0; i < tasksEntries.length; i++) {
+ 
+$("div[title=\"" + tasksEntries[i].Title + "\"]").balloon({
+contents: '<img src ="/Images1/_t/images_jpg.jpg"/></br><ul><li> Designation :' + tasksEntries[i].Designation + '</li><li>Phone# : 123-234-1233</li></ul>'
+ 
+});
+Finally the OrgChart is populated as displayed below.  You can see a <ul><li> list on the top, which can made to visible=false to the <DIV> with ID ‘left’ on the above mentioned script, displayed only for testing purpose.
