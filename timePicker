@@ -1,0 +1,67 @@
+() => {
+
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  var startHour,endHour,startMinute,endMinute;
+
+  return ([
+    <DatePicker
+      selected={startDate}
+      onChange={date => {
+      this.startHour = date.getHours();
+      this.startMinute = date.getMinutes();                  validationTime();
+      console.log("hour->" + date.getHours());
+      console.log("minute->" + date.getMinutes());
+      setStartDate(date)
+            console.log(calculateTime());
+      }}
+      showTimeSelect
+      showTimeSelectOnly
+      timeIntervals={5}
+      timeCaption="Time"
+      dateFormat="h:mm aa"
+    />,
+     <DatePicker
+      selected={endDate}
+      onChange={date => {
+      setEndDate(date);
+      this.endHour = date.getHours();
+      this.endMinute = date.getMinutes();
+      validationTime();
+      console.log("hour->" + date.getHours());
+      console.log("minute->" + date.getMinutes());
+      console.log(calculateTime());
+      }}
+      showTimeSelect
+      showTimeSelectOnly
+      timeIntervals={5}
+      timeCaption="Time"
+      dateFormat="h:mm aa"
+    />
+  ]);
+   function calculateTime(){
+     let hour,minute;
+     if(this.endMinute >= this.startMinute){
+          hour = this.endHour - this.startHour; 
+          minute = this.endMinute - this.startMinute;
+     } else {
+         hour = this.endHour - 1 - this.startHour;
+         minute = 60 - (this.startMinute - this.endMinute) ; 
+     }
+
+     return (hour + " saat" + minute + " dakika");
+}
+function validationTime() {
+    if(this.startHour > this.endHour) {
+        console.log("başlangıç saati bitiş saatinden büyük olamaz");
+    } else if(this.startHour == this.endHour){
+        if(this.startMinute > this.endMinute){
+             console.log("başlangıç saati bitiş saatinden büyük olamaz");
+        } else {
+             console.log("everything okey :)");
+        }
+    } else{
+             console.log("everything okey :)");
+    }
+}
+};

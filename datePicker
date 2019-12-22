@@ -1,0 +1,268 @@
+() => {
+var sDate;
+
+var eDate;
+
+
+function getBusinessDatesCount(startDate, endDate) {
+    var count = 0;
+    var curDate = startDate;
+    while (curDate <= endDate) {
+        var dayOfWeek = curDate.getDay();
+        if(!((dayOfWeek == 6) || (dayOfWeek == 0)))
+           count++;
+        curDate.setDate(curDate.getDate() + 1);
+    }
+    // alert(count)
+    return count;
+}
+// deneme
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const isWeekday = date => {
+    const day = getDay(date);
+    return day !== 0 && day !== 6;
+  };
+  let startDay,startMonth,endDay,endMonth,calculated;
+  function calculateDay() {
+   this.startMonth = this.startMonth + 1 ;
+  this.endMonth = this.endMonth + 1 ;
+  let tallMonths = this.startMonth == 1 || this.startMonth == 3 ||this.startMonth == 5 ||this.startMonth == 7 ||this.startMonth == 8 ||this.startMonth == 10 ||this.startMonth == 12;
+  let middleMonths = this.startMonth == 4 || this.startMonth == 6 ||this.startMonth == 9 ||this.startMonth == 11;
+  let february = this.startMonth == 2;
+ 
+   if(this.startMonth == this.endMonth) {
+       calculated = this.endDay - this.startDay + 1;
+       calculated = calculated - parseInt((calculated / 7)) * 2;
+   } else if(this.startMonth > this.endMonth) {
+       if(this.startDay > this.endDay){ // yıl geçişi
+           if(tallMonths){
+           calculated = (31 - (this.startDay - this.endDay)) + 1;
+              console.log("calculated tall->" + calculated);
+           } else if(middleMonths){
+             calculated = (30 - (this.startDay - this.endDay)) + 1;
+              console.log("calculated middle->" + calculated);
+           } else {
+               calculated = (28 - (this.startDay - this.endDay)) + 1;
+              console.log("calculated short->" + calculated);
+           }
+           if(parseInt(calculated / 7) !== 0){
+                     calculated = calculated - (parseInt(calculated / 7));
+                      }
+
+       }
+   }
+   console.log("calculated ->" + calculated);
+   
+  }
+//////////////////////////////////////////////////////////////////////////////////////
+  return ([
+    <DatePicker
+      selected={startDate}
+      onChange={date => {
+      setStartDate(date);
+      console.log("start date->" + date);
+      this.startDay = date.getDate();
+      this.startMonth = date.getMonth();
+      this.sDate = date;
+      }}
+      filterDate={isWeekday}
+    />,
+     <DatePicker
+      selected={endDate}
+      onChange={date => {
+      setEndDate(date)
+      console.log("end date->" + date);
+      this.endDay = date.getDate();
+      this.endMonth = date.getMonth();
+      this.eDate = date;
+      getBusinessDatesCount(this.sDate,this.eDate);
+      calculateDay();
+      }}
+      filterDate={isWeekday}
+    />
+ ] );
+};
+
+/////////////////////////////////
+.comboBox{
+  width: 682px;
+  height: 43px;
+  border-radius: 2px;
+  border: solid 1px #979797;
+  background-color: #ffffff;
+}
+//////////////////////////
+.info-circle {
+  width: 16px;
+  height: 16px;
+  font-family: FontAwesome5Pro-Solid;
+  font-size: 16px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #3d81ff;
+}
+/////////////////////
+.Grev-Tr- {
+  width: 134px;
+  height: 19px;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+
+.Grev-Tr- .text-style-1 {
+  color: #ca3422;
+}
+///////////////
+.Grev-Sresi {
+  width: 136px;
+  height: 19px;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+////////////////////////
+.Balang-Tarihi- {
+  width: 122px;
+  height: 18px;
+  font-family: Montserrat;
+  font-size: 14px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+
+.Balang-Tarihi- .text-style-1 {
+
+  color: #ca3422;
+
+}
+//////////////////////////
+.date {
+
+  width: 175px;
+  height: 43px;
+  border-radius: 2px;
+  border: solid 1px #979797;
+  background-color: #ffffff;
+}
+/////////////////////////
+date in içindeki yazı 
+{
+  width: 98px;
+  height: 19px;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+////////////////////////
+.Rectangle-Copy-3 {
+  width: 120px;
+  height: 43px;
+  border-radius: 2px;
+  border: solid 1px #979797;
+  background-color: #ffffff;
+}
+////////////////////
+CSS
+
+.Hesaplanan-izin-gre {
+  width: 216px;
+  height: 18px;
+  font-family: Montserrat;
+  font-size: 14px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+///////
+
+.-saat-30-dakika {
+  width: 112px;
+  height: 18px;
+  font-family: Montserrat;
+  font-size: 14px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+//////////////
+CSS
+
+.Acıklama {
+  width: 76px;
+  height: 19px;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+////////////////////////
+CSS
+.RectangleAçıklama {
+  width: 682px;
+  height: 106px;
+  border-radius: 2px;
+  border: solid 1px #979797;
+  background-color: #ffffff;
+}
+///////
+CSS
+.saveButton {
+  width: 120px;
+  height: 43px;
+  border-radius: 2px;
+  background-color: #3d81ff;
+}
+///////////////////
+.Günlük {
+  width: 59px;
+  height: 19px;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #2c2c2c;
+}
+///////////////////
+.radioButton {
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+  background-color: #ffffff;
+}
